@@ -10,7 +10,10 @@ import {
 import type { EonetFeature } from '../types/eonet'
 import type { Location } from '../types/weather'
 import { getFeatureCoordinates } from '../lib/eonet'
-import { getCategoryColor, getPrimaryCategoryId } from '../lib/categoryColors'
+import {
+  getCategoryLabel,
+  getEventColor,
+} from '../lib/categoryColors'
 import 'leaflet/dist/leaflet.css'
 
 type EventMapProps = {
@@ -18,6 +21,16 @@ type EventMapProps = {
   userLocation: Location | null
   selectedId: string | null
   onSelect: (id: string | null) => void
+}
+
+function markerStyle(color: string, selected: boolean) {
+  return {
+    color,
+    fillColor: color,
+    fillOpacity: selected ? 1 : 0.88,
+    weight: selected ? 3 : 2,
+    opacity: 1,
+  }
 }
 
 function MapController({
@@ -60,12 +73,14 @@ function EventMarker({
   onSelect: (id: string) => void
 }) {
   const props = feature.properties
-  const color = getCategoryColor(getPrimaryCategoryId(props.categories))
+  const color = getEventColor(props.categories, props.title)
+  const categoryLabel = getCategoryLabel(props.categories, props.title)
   const coords = getFeatureCoordinates(feature.geometry)
 
   if (!coords) return null
 
   const [lat, lon] = coords
+  const path = markerStyle(color, selected)
 
   if (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon') {
     const positions =
@@ -88,7 +103,7 @@ function EventMarker({
             pathOptions={{
               color,
               fillColor: color,
-              fillOpacity: selected ? 0.45 : 0.25,
+              fillOpacity: selected ? 0.45 : 0.22,
               weight: selected ? 3 : 1.5,
             }}
             eventHandlers={{ click: () => onSelect(props.id) }}
@@ -97,19 +112,14 @@ function EventMarker({
         <CircleMarker
           center={[lat, lon]}
           radius={selected ? 10 : 7}
-          pathOptions={{
-            color: '#fff',
-            fillColor: color,
-            fillOpacity: 0.9,
-            weight: 2,
-          }}
+          pathOptions={path}
           eventHandlers={{ click: () => onSelect(props.id) }}
         >
           <Popup className="glass-popup">
             <strong>{props.title}</strong>
-            {props.categories?.[0] && (
-              <p className="popup-category">{props.categories[0].title}</p>
-            )}
+            <p className="popup-category" style={{ color }}>
+              {categoryLabel}
+            </p>
           </Popup>
         </CircleMarker>
       </>
@@ -120,19 +130,14 @@ function EventMarker({
     <CircleMarker
       center={[lat, lon]}
       radius={selected ? 10 : 7}
-      pathOptions={{
-        color: '#fff',
-        fillColor: color,
-        fillOpacity: 0.9,
-        weight: selected ? 3 : 2,
-      }}
+      pathOptions={path}
       eventHandlers={{ click: () => onSelect(props.id) }}
     >
       <Popup className="glass-popup">
         <strong>{props.title}</strong>
-        {props.categories?.[0] && (
-          <p className="popup-category">{props.categories[0].title}</p>
-        )}
+        <p className="popup-category" style={{ color }}>
+          {categoryLabel}
+        </p>
       </Popup>
     </CircleMarker>
   )
@@ -164,7 +169,7 @@ export function EventMap({
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url="https://{s.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
 
         <MapController
@@ -178,10 +183,11 @@ export function EventMap({
             center={[userLocation.lat, userLocation.lon]}
             radius={8}
             pathOptions={{
-              color: '#ff3b5c',
-              fillColor: '#ef4444',
+              color: '#ffffff',
+              fillColor: '#ffffff',
               fillOpacity: 1,
               weight: 3,
+              opacity: 1,
             }}
           >
             <Popup>You are here</Popup>

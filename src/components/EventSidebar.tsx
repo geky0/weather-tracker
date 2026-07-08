@@ -1,5 +1,5 @@
 import type { EonetFeature } from '../types/eonet'
-import { getCategoryColor, getPrimaryCategoryId } from '../lib/categoryColors'
+import { getEventColor } from '../lib/categoryColors'
 import { GlassCard } from './GlassCard'
 
 type EventSidebarProps = {
@@ -43,8 +43,7 @@ export function EventSidebar({
 
         {typedFeatures.map((feature, index) => {
           const props = feature.properties
-          const categoryId = getPrimaryCategoryId(props.categories)
-          const color = getCategoryColor(categoryId)
+          const color = getEventColor(props.categories, props.title)
           const isOpen = !props.closed
 
           return (
