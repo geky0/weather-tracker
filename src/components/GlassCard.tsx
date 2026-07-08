@@ -34,7 +34,8 @@ export function GlassCard({
           : undefined
       }
     >
-      {children}
+      <div className="glass-card-shine" aria-hidden="true" />
+      <div className="glass-card-body">{children}</div>
     </div>
   )
 }

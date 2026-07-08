@@ -18,8 +18,8 @@ export default defineConfig({
         short_name: 'Weather',
         description:
           'Liquid glass weather tracker with NASA EONET natural events and Open-Meteo forecasts.',
-        theme_color: '#0a0e1a',
-        background_color: '#0a0e1a',
+        theme_color: '#1a0508',
+        background_color: '#1a0508',
         display: 'standalone',
         orientation: 'any',
         icons: [

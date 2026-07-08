@@ -12,7 +12,10 @@ export function WeatherPanel({ weather, loading, error }: WeatherPanelProps) {
   if (loading && !weather) {
     return (
       <GlassCard className="weather-panel">
-        <div className="weather-skeleton">Loading weather...</div>
+        <div className="weather-skeleton">
+          <span className="skeleton-pulse" />
+          Calibrating atmosphere...
+        </div>
       </GlassCard>
     )
   }
@@ -28,34 +31,50 @@ export function WeatherPanel({ weather, loading, error }: WeatherPanelProps) {
   if (!weather) return null
 
   const { label, icon } = getWeatherInfo(weather.current.weatherCode)
+  const temp = Math.round(weather.current.temperature)
 
   return (
-    <GlassCard className="weather-panel">
-      <div className="weather-header">
-        <div>
-          <p className="weather-location">{weather.location.name}</p>
-          <p className="weather-condition">
-            {icon} {label}
-          </p>
+    <GlassCard className="weather-panel weather-panel-hero">
+      <div className="lens-flare" aria-hidden="true" />
+
+      <div className="weather-panel-top">
+        <div className="live-indicator">
+          <span className="live-dot" />
+          <span>LIVE</span>
         </div>
-        <div className="weather-temp">
-          {Math.round(weather.current.temperature)}°
-        </div>
+        <p className="weather-location">{weather.location.name}</p>
       </div>
 
-      <p className="weather-wind">
-        Wind {Math.round(weather.current.windSpeed)} km/h
-      </p>
+      <div className="weather-hero">
+        <div className="weather-temp chrome-text" data-unit="°">
+          {temp}
+        </div>
+        <p className="weather-condition">
+          <span className="weather-icon">{icon}</span>
+          {label}
+        </p>
+      </div>
+
+      <div className="weather-meta">
+        <span>Wind {Math.round(weather.current.windSpeed)} km/h</span>
+        <span className="meta-divider">◆</span>
+        <span>5-day outlook</span>
+      </div>
 
       <div className="forecast-strip">
-        {weather.daily.map((day) => {
+        {weather.daily.map((day, i) => {
           const info = getWeatherInfo(day.weatherCode)
           return (
-            <div key={day.date} className="forecast-day">
+            <div
+              key={day.date}
+              className="forecast-day"
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
               <span className="forecast-day-name">{formatDay(day.date)}</span>
               <span className="forecast-icon">{info.icon}</span>
               <span className="forecast-temps">
-                {Math.round(day.maxTemp)}° / {Math.round(day.minTemp)}°
+                <strong>{Math.round(day.maxTemp)}°</strong>
+                <span>{Math.round(day.minTemp)}°</span>
               </span>
             </div>
           )

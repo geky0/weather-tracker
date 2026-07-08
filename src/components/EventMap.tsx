@@ -178,8 +178,8 @@ export function EventMap({
             center={[userLocation.lat, userLocation.lon]}
             radius={8}
             pathOptions={{
-              color: '#60a5fa',
-              fillColor: '#3b82f6',
+              color: '#ff3b5c',
+              fillColor: '#ef4444',
               fillOpacity: 1,
               weight: 3,
             }}

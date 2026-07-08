@@ -39,16 +39,21 @@ export default function App() {
 
   return (
     <div className="app">
-      <div className="bg-mesh" aria-hidden="true" />
+      <div className="bg-void" aria-hidden="true">
+        <div className="bg-orb bg-orb-red" />
+        <div className="bg-orb bg-orb-violet" />
+        <div className="bg-orb bg-orb-blue" />
+      </div>
+      <div className="bg-dots" aria-hidden="true" />
       <div className="bg-noise" aria-hidden="true" />
 
       <header className="app-header">
         <div className="brand">
           <div className="brand-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5" />
               <path
-                d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
@@ -56,8 +61,11 @@ export default function App() {
             </svg>
           </div>
           <div>
-            <h1 className="brand-title">Weather Tracker</h1>
-            <p className="brand-subtitle">NASA EONET + Open-Meteo</p>
+            <h1 className="brand-title">
+              <span className="chrome-text-sm">Weather</span>
+              <span className="brand-title-accent">Tracker</span>
+            </h1>
+            <p className="brand-subtitle">EONET · Open-Meteo · Live</p>
           </div>
         </div>
         <LocationSearch
