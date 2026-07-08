@@ -33,6 +33,15 @@ npm run preview
 
 ## Deploy to GitHub Pages
 
+**Quick deploy (recommended):**
+
+```powershell
+gh auth login          # one-time: authenticate in browser
+.\scripts\deploy.ps1   # creates repo, pushes, enables Pages
+```
+
+**Manual steps:**
+
 1. Create a GitHub repository named **`weather-tracker`**
 2. Push this project to the `main` branch:
 
