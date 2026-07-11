@@ -130,14 +130,22 @@ export default function App() {
             rel="noopener noreferrer"
           >
             NASA EONET
-          </a>{' '}
-          &amp;{' '}
+          </a>
+          {', '}
           <a
             href="https://open-meteo.com/"
             target="_blank"
             rel="noopener noreferrer"
           >
             Open-Meteo
+          </a>
+          {' & '}
+          <a
+            href="https://www.rainviewer.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            RainViewer
           </a>
         </span>
       </footer>

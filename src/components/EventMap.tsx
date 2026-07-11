@@ -18,6 +18,8 @@ import {
   getEventColor,
   getCategoryColor,
 } from '../lib/categoryColors'
+import { formatRadarTime, radarTileUrl } from '../lib/radar'
+import { useRadar } from '../hooks/useRadar'
 import 'leaflet/dist/leaflet.css'
 
 type EventMapProps = {
@@ -245,12 +247,27 @@ export function EventMap({
   onSelect,
 }: EventMapProps) {
   const [zoom, setZoom] = useState(3)
+  const [radarOn, setRadarOn] = useState(true)
   const mapEvents = useMemo(() => features as EonetFeature[], [features])
+  const {
+    host,
+    frame,
+    frames,
+    frameIndex,
+    playing,
+    setPlaying,
+    setFrameIndex,
+    loading: radarLoading,
+    error: radarError,
+  } = useRadar(radarOn)
 
   const center = useMemo<[number, number]>(
     () => (userLocation ? [userLocation.lat, userLocation.lon] : [20, 0]),
     [userLocation],
   )
+
+  const radarUrl =
+    radarOn && host && frame ? radarTileUrl(host, frame.path) : null
 
   return (
     <div className="event-map">
@@ -281,6 +298,18 @@ export function EventMap({
           opacity={0.85}
           pane="overlayPane"
         />
+
+        {radarUrl && (
+          <TileLayer
+            key={radarUrl}
+            url={radarUrl}
+            opacity={0.65}
+            maxNativeZoom={7}
+            maxZoom={12}
+            zIndex={350}
+            pane="overlayPane"
+          />
+        )}
 
         <ZoomControl position="bottomright" />
         <FitWorldWidth />
@@ -322,6 +351,54 @@ export function EventMap({
 
       <div className="map-vignette" aria-hidden="true" />
 
+      <div className="radar-controls">
+        <button
+          type="button"
+          className={`radar-toggle ${radarOn ? 'radar-toggle-on' : ''}`}
+          onClick={() => setRadarOn((v) => !v)}
+          aria-pressed={radarOn}
+        >
+          <span className="radar-toggle-dot" />
+          Radar
+        </button>
+
+        {radarOn && (
+          <>
+            <button
+              type="button"
+              className="radar-play"
+              onClick={() => setPlaying((p) => !p)}
+              disabled={frames.length < 2}
+              aria-label={playing ? 'Pause radar' : 'Play radar'}
+            >
+              {playing ? '❚❚' : '▶'}
+            </button>
+            <input
+              type="range"
+              className="radar-scrub"
+              min={0}
+              max={Math.max(0, frames.length - 1)}
+              value={frameIndex}
+              onChange={(e) => {
+                setPlaying(false)
+                setFrameIndex(Number(e.target.value))
+              }}
+              aria-label="Radar time"
+              disabled={frames.length < 2}
+            />
+            <span className="radar-time">
+              {radarLoading
+                ? 'Loading…'
+                : radarError
+                  ? 'Offline'
+                  : frame
+                    ? formatRadarTime(frame.time)
+                    : '—'}
+            </span>
+          </>
+        )}
+      </div>
+
       <div className="map-legend" aria-label="Event color legend">
         {LEGEND_ITEMS.map((item) => (
           <div key={item.id} className="map-legend-item">
@@ -334,7 +411,22 @@ export function EventMap({
         ))}
       </div>
 
-      <div className="map-attrib">© OSM · CARTO</div>
+      <div className="map-attrib">
+        © OSM · CARTO
+        {radarOn ? (
+          <>
+            {' '}
+            ·{' '}
+            <a
+              href="https://www.rainviewer.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              RainViewer
+            </a>
+          </>
+        ) : null}
+      </div>
     </div>
   )
 }
