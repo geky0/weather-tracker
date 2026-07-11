@@ -40,6 +40,32 @@ export async function fetchEventsGeoJSON(
   return res.json()
 }
 
+/** EONET GeoJSON often emits multiple features per event (one per date). Keep the latest. */
+export function dedupeFeaturesByEventId(
+  features: GeoJSON.Feature[],
+): GeoJSON.Feature[] {
+  const byId = new Map<string, GeoJSON.Feature>()
+
+  for (const feature of features) {
+    const props = feature.properties as { id?: string; date?: string } | null
+    const id = props?.id
+    if (!id) continue
+
+    const existing = byId.get(id)
+    if (!existing) {
+      byId.set(id, feature)
+      continue
+    }
+
+    const nextDate = props?.date ?? ''
+    const prevDate =
+      (existing.properties as { date?: string } | null)?.date ?? ''
+    if (nextDate >= prevDate) byId.set(id, feature)
+  }
+
+  return Array.from(byId.values())
+}
+
 export function getFeatureCoordinates(
   geometry: GeoJSON.Geometry,
 ): [number, number] | null {

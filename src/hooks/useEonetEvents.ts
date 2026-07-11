@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { EonetCategory, EventFilters } from '../types/eonet'
-import { fetchCategories, fetchEventsGeoJSON } from '../lib/eonet'
+import {
+  dedupeFeaturesByEventId,
+  fetchCategories,
+  fetchEventsGeoJSON,
+} from '../lib/eonet'
 
 const REFETCH_MS = 10 * 60 * 1000
 
@@ -36,7 +40,7 @@ export function useEonetEvents(filters: EventFilters = DEFAULT_FILTERS) {
         days: filters.days,
         limit: filters.limit,
       })
-      setFeatures(data.features ?? [])
+      setFeatures(dedupeFeaturesByEventId(data.features ?? []))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load events')
     } finally {
