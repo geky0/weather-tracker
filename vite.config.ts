@@ -40,6 +40,37 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         navigateFallback: 'index.html',
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/eonet\.gsfc\.nasa\.gov\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'eonet-api',
+              expiration: { maxEntries: 32, maxAgeSeconds: 60 * 10 },
+              networkTimeoutSeconds: 8,
+            },
+          },
+          {
+            urlPattern: /^https:\/\/api\.rainviewer\.com\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'rainviewer-api',
+              expiration: { maxEntries: 8, maxAgeSeconds: 60 * 5 },
+              networkTimeoutSeconds: 8,
+            },
+          },
+          {
+            urlPattern: /^https:\/\/.*basemaps\.cartocdn\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'map-tiles',
+              expiration: { maxEntries: 256, maxAgeSeconds: 60 * 60 * 24 * 7 },
+            },
+          },
+        ],
       },
     }),
   ],

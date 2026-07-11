@@ -8,7 +8,9 @@
     "build": "tsc -b && cross-env GITHUB_PAGES=true vite build",
     "build:local": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:browsers": "playwright test",
+    "test:browsers:ui": "playwright test --ui"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
@@ -17,6 +19,7 @@
     "react-leaflet": "^5.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/vite": "^4.3.2",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^24.13.2",

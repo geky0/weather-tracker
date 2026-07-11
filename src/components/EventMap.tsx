@@ -20,6 +20,7 @@ import {
 } from '../lib/categoryColors'
 import { formatRadarTime, radarTileUrl } from '../lib/radar'
 import { useRadar } from '../hooks/useRadar'
+import { detectBrowser } from '../lib/browser'
 import 'leaflet/dist/leaflet.css'
 
 type EventMapProps = {
@@ -106,7 +107,11 @@ function MapController({
 
   useEffect(() => {
     const t = window.setTimeout(() => map.invalidateSize(), 80)
-    return () => window.clearTimeout(t)
+    const t2 = window.setTimeout(() => map.invalidateSize(), 400)
+    return () => {
+      window.clearTimeout(t)
+      window.clearTimeout(t2)
+    }
   }, [map])
 
   useEffect(() => {
@@ -248,6 +253,7 @@ export function EventMap({
 }: EventMapProps) {
   const [zoom, setZoom] = useState(3)
   const [radarOn, setRadarOn] = useState(true)
+  const preferCanvas = useMemo(() => detectBrowser().engine !== 'webkit', [])
   const mapEvents = useMemo(() => features as EonetFeature[], [features])
   const {
     host,
@@ -278,7 +284,7 @@ export function EventMap({
         maxZoom={12}
         className="leaflet-map"
         zoomControl={false}
-        preferCanvas
+        preferCanvas={preferCanvas}
         worldCopyJump
         attributionControl={false}
       >
@@ -369,7 +375,7 @@ export function EventMap({
               className="radar-play"
               onClick={() => setPlaying((p) => !p)}
               disabled={frames.length < 2}
-              aria-label={playing ? 'Pause radar' : 'Play radar'}
+              aria-label={playing ? 'Pause animation' : 'Play animation'}
             >
               {playing ? '❚❚' : '▶'}
             </button>
