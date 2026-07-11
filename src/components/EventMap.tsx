@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   MapContainer,
   TileLayer,
@@ -10,7 +10,6 @@ import {
   useMap,
   useMapEvents,
 } from 'react-leaflet'
-import type { LatLngBoundsExpression } from 'leaflet'
 import type { EonetFeature } from '../types/eonet'
 import type { Location } from '../types/weather'
 import { getFeatureCoordinates } from '../lib/eonet'
@@ -36,19 +35,59 @@ const LEGEND_ITEMS = [
   { id: 'floods', label: 'Floods' },
 ] as const
 
-/** Clamp panning so you never scroll into empty white space past the world. */
-const WORLD_BOUNDS: LatLngBoundsExpression = [
-  [-85, -180],
-  [85, 180],
-]
+const MAX_LAT = 82
 
 function markerRadius(zoom: number, selected: boolean): number {
-  // Pixel radius — stay tiny at world view so dots don't blot the map
   if (zoom <= 2) return selected ? 4 : 2.5
   if (zoom <= 3) return selected ? 4.5 : 3
   if (zoom <= 5) return selected ? 5.5 : 3.5
   if (zoom <= 7) return selected ? 7 : 4.5
   return selected ? 8 : 5.5
+}
+
+/** Keep the world wide enough that empty side bars never appear. */
+function FitWorldWidth() {
+  const map = useMap()
+
+  const updateMinZoom = useCallback(() => {
+    const size = map.getSize()
+    if (size.x <= 0) return
+
+    // At this zoom, one world (~256 * 2^z px) fills the container width
+    const needed = Math.log2(size.x / 256)
+    const minZoom = Math.max(1, Math.ceil(needed * 100) / 100)
+    if (map.getMinZoom() !== minZoom) {
+      map.setMinZoom(minZoom)
+    }
+    if (map.getZoom() < minZoom) {
+      map.setZoom(minZoom)
+    }
+  }, [map])
+
+  useEffect(() => {
+    updateMinZoom()
+    map.on('resize', updateMinZoom)
+    return () => {
+      map.off('resize', updateMinZoom)
+    }
+  }, [map, updateMinZoom])
+
+  return null
+}
+
+/** Stop vertical pan past the poles without locking the sides. */
+function ClampLatitude() {
+  const map = useMapEvents({
+    moveend: () => {
+      const center = map.getCenter()
+      if (center.lat > MAX_LAT) {
+        map.setView([MAX_LAT, center.lng], map.getZoom(), { animate: false })
+      } else if (center.lat < -MAX_LAT) {
+        map.setView([-MAX_LAT, center.lng], map.getZoom(), { animate: false })
+      }
+    },
+  })
+  return null
 }
 
 function MapController({
@@ -218,13 +257,12 @@ export function EventMap({
       <MapContainer
         center={center}
         zoom={3}
-        minZoom={2}
+        minZoom={1}
         maxZoom={12}
-        maxBounds={WORLD_BOUNDS}
-        maxBoundsViscosity={1}
         className="leaflet-map"
         zoomControl={false}
         preferCanvas
+        worldCopyJump
         attributionControl={false}
       >
         <TileLayer
@@ -232,8 +270,6 @@ export function EventMap({
           url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
           subdomains="abcd"
           maxZoom={12}
-          noWrap
-          bounds={WORLD_BOUNDS}
           updateWhenIdle
           keepBuffer={2}
         />
@@ -241,14 +277,14 @@ export function EventMap({
           url="https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png"
           subdomains="abcd"
           maxZoom={12}
-          noWrap
-          bounds={WORLD_BOUNDS}
           updateWhenIdle
           opacity={0.85}
           pane="overlayPane"
         />
 
         <ZoomControl position="bottomright" />
+        <FitWorldWidth />
+        <ClampLatitude />
         <ZoomTracker onZoom={setZoom} />
 
         <MapController
