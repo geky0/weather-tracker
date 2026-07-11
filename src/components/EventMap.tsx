@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import {
   MapContainer,
   TileLayer,
@@ -8,7 +8,9 @@ import {
   Polyline,
   ZoomControl,
   useMap,
+  useMapEvents,
 } from 'react-leaflet'
+import type { LatLngBoundsExpression } from 'leaflet'
 import type { EonetFeature } from '../types/eonet'
 import type { Location } from '../types/weather'
 import { getFeatureCoordinates } from '../lib/eonet'
@@ -34,6 +36,21 @@ const LEGEND_ITEMS = [
   { id: 'floods', label: 'Floods' },
 ] as const
 
+/** Clamp panning so you never scroll into empty white space past the world. */
+const WORLD_BOUNDS: LatLngBoundsExpression = [
+  [-85, -180],
+  [85, 180],
+]
+
+function markerRadius(zoom: number, selected: boolean): number {
+  // Pixel radius — stay tiny at world view so dots don't blot the map
+  if (zoom <= 2) return selected ? 4 : 2.5
+  if (zoom <= 3) return selected ? 4.5 : 3
+  if (zoom <= 5) return selected ? 5.5 : 3.5
+  if (zoom <= 7) return selected ? 7 : 4.5
+  return selected ? 8 : 5.5
+}
+
 function MapController({
   userLocation,
   selectedId,
@@ -47,7 +64,6 @@ function MapController({
   const lastLoc = useRef<{ lat: number; lon: number } | null>(null)
 
   useEffect(() => {
-    // Fix blank/half-rendered tiles after layout settles
     const t = window.setTimeout(() => map.invalidateSize(), 80)
     return () => window.clearTimeout(t)
   }, [map])
@@ -79,13 +95,27 @@ function MapController({
   return null
 }
 
+function ZoomTracker({ onZoom }: { onZoom: (zoom: number) => void }) {
+  const map = useMapEvents({
+    zoomend: () => onZoom(map.getZoom()),
+  })
+
+  useEffect(() => {
+    onZoom(map.getZoom())
+  }, [map, onZoom])
+
+  return null
+}
+
 const EventMarker = memo(function EventMarker({
   feature,
   selected,
+  zoom,
   onSelect,
 }: {
   feature: EonetFeature
   selected: boolean
+  zoom: number
   onSelect: (id: string) => void
 }) {
   const props = feature.properties
@@ -96,16 +126,15 @@ const EventMarker = memo(function EventMarker({
   if (!coords) return null
 
   const [lat, lon] = coords
-  const radius = selected ? 9 : 6
+  const radius = markerRadius(zoom, selected)
   const path = {
-    color: selected ? '#ffffff' : color,
+    color: '#ffffff',
     fillColor: color,
-    fillOpacity: selected ? 1 : 0.9,
-    weight: selected ? 2.5 : 1.5,
+    fillOpacity: selected ? 1 : 0.92,
+    weight: selected ? 2 : 1.25,
     opacity: 1,
   }
 
-  // Polygons / lines only when selected — keeps pan/zoom smooth at world scale
   const showDetail =
     selected &&
     (feature.geometry.type === 'Polygon' ||
@@ -176,14 +205,11 @@ export function EventMap({
   selectedId,
   onSelect,
 }: EventMapProps) {
-  const mapEvents = useMemo(
-    () => features as EonetFeature[],
-    [features],
-  )
+  const [zoom, setZoom] = useState(3)
+  const mapEvents = useMemo(() => features as EonetFeature[], [features])
 
   const center = useMemo<[number, number]>(
-    () =>
-      userLocation ? [userLocation.lat, userLocation.lon] : [20, 0],
+    () => (userLocation ? [userLocation.lat, userLocation.lon] : [20, 0]),
     [userLocation],
   )
 
@@ -194,10 +220,11 @@ export function EventMap({
         zoom={3}
         minZoom={2}
         maxZoom={12}
+        maxBounds={WORLD_BOUNDS}
+        maxBoundsViscosity={1}
         className="leaflet-map"
         zoomControl={false}
         preferCanvas
-        worldCopyJump
         attributionControl={false}
       >
         <TileLayer
@@ -205,6 +232,8 @@ export function EventMap({
           url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
           subdomains="abcd"
           maxZoom={12}
+          noWrap
+          bounds={WORLD_BOUNDS}
           updateWhenIdle
           keepBuffer={2}
         />
@@ -212,12 +241,15 @@ export function EventMap({
           url="https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png"
           subdomains="abcd"
           maxZoom={12}
+          noWrap
+          bounds={WORLD_BOUNDS}
           updateWhenIdle
           opacity={0.85}
           pane="overlayPane"
         />
 
         <ZoomControl position="bottomright" />
+        <ZoomTracker onZoom={setZoom} />
 
         <MapController
           userLocation={userLocation}
@@ -228,10 +260,10 @@ export function EventMap({
         {userLocation && (
           <CircleMarker
             center={[userLocation.lat, userLocation.lon]}
-            radius={7}
+            radius={markerRadius(zoom, true)}
             pathOptions={{
               color: '#ffffff',
-              fillColor: '#ffffff',
+              fillColor: '#ff3b5c',
               fillOpacity: 0.95,
               weight: 2,
               opacity: 1,
@@ -246,6 +278,7 @@ export function EventMap({
             key={feature.properties.id}
             feature={feature}
             selected={selectedId === feature.properties.id}
+            zoom={zoom}
             onSelect={onSelect}
           />
         ))}
@@ -265,9 +298,7 @@ export function EventMap({
         ))}
       </div>
 
-      <div className="map-attrib">
-        © OSM · CARTO
-      </div>
+      <div className="map-attrib">© OSM · CARTO</div>
     </div>
   )
 }
