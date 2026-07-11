@@ -18,9 +18,10 @@ import {
   getEventColor,
   getCategoryColor,
 } from '../lib/categoryColors'
-import { formatRadarTime, radarTileUrl } from '../lib/radar'
+import { formatRadarTime } from '../lib/radar'
 import { useRadar } from '../hooks/useRadar'
 import { detectBrowser } from '../lib/browser'
+import { RadarOverlay } from './RadarOverlay'
 import 'leaflet/dist/leaflet.css'
 
 type EventMapProps = {
@@ -272,9 +273,6 @@ export function EventMap({
     [userLocation],
   )
 
-  const radarUrl =
-    radarOn && host && frame ? radarTileUrl(host, frame.path) : null
-
   return (
     <div className="event-map">
       <MapContainer
@@ -305,16 +303,8 @@ export function EventMap({
           pane="overlayPane"
         />
 
-        {radarUrl && (
-          <TileLayer
-            key={radarUrl}
-            url={radarUrl}
-            opacity={0.65}
-            maxNativeZoom={7}
-            maxZoom={12}
-            zIndex={350}
-            pane="overlayPane"
-          />
+        {radarOn && host && frame && (
+          <RadarOverlay host={host} frame={frame} />
         )}
 
         <ZoomControl position="bottomright" />

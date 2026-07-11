@@ -960,9 +960,14 @@ html[data-engine='gecko'] .bg-dots {
   background: #0b0f1c !important;
 }
 
-.event-map .leaflet-tile-pane {
-  /* Prevent grey/white flash while tiles load */
-  background: #0b0f1c;
+.event-map .radar-tiles {
+  /* Soften harsh tile edges while keeping rain colors readable */
+  mix-blend-mode: screen;
+  pointer-events: none !important;
+}
+
+.event-map .radar-tiles img {
+  image-rendering: auto;
 }
 
 .map-vignette {

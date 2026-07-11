@@ -5,13 +5,15 @@ import {
 } from '../lib/radar'
 
 const REFRESH_MS = 5 * 60 * 1000
-const FRAME_MS = 450
+/** Slow enough to actually see each frame */
+const FRAME_MS = 900
 
 export function useRadar(enabled: boolean) {
   const [host, setHost] = useState<string | null>(null)
   const [frames, setFrames] = useState<RadarFrame[]>([])
   const [frameIndex, setFrameIndex] = useState(0)
-  const [playing, setPlaying] = useState(true)
+  // Start paused so the latest frame stays on screen instead of flashing
+  const [playing, setPlaying] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -21,6 +23,7 @@ export function useRadar(enabled: boolean) {
     try {
       const data = await fetchRadarMaps()
       setHost(data.host)
+      // Past frames only — clearer composite reflectivity
       setFrames(data.frames)
       setFrameIndex(Math.max(0, data.frames.length - 1))
     } catch (err) {

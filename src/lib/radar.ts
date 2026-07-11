@@ -24,8 +24,8 @@ export async function fetchRadarMaps(): Promise<RadarMapsData> {
   const data = (await res.json()) as RainViewerResponse
 
   const past = data.radar?.past ?? []
-  const nowcast = data.radar?.nowcast ?? []
-  const frames = [...past, ...nowcast]
+  // Prefer past reflectivity frames; nowcast alone can look empty/flashy
+  const frames = past.length > 0 ? past : (data.radar?.nowcast ?? [])
 
   if (!data.host || frames.length === 0) {
     throw new Error('No radar frames available')
@@ -34,9 +34,9 @@ export async function fetchRadarMaps(): Promise<RadarMapsData> {
   return { host: data.host, frames }
 }
 
-/** Color scheme 2 = Universal Blue, options 1_1 = smooth + snow */
+/** Color scheme 4 = Original (more visible on dark maps), options 1_1 = smooth + snow */
 export function radarTileUrl(host: string, framePath: string): string {
-  return `${host}${framePath}/256/{z}/{x}/{y}/2/1_1.png`
+  return `${host}${framePath}/256/{z}/{x}/{y}/4/1_1.png`
 }
 
 export function formatRadarTime(unixSeconds: number): string {
