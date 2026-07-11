@@ -5,8 +5,8 @@ import {
 } from '../lib/radar'
 
 const REFRESH_MS = 5 * 60 * 1000
-/** Slow enough to actually see each frame */
-const FRAME_MS = 900
+/** ~2.5s per frame so the loop is easy to follow */
+const FRAME_MS = 2500
 
 export function useRadar(enabled: boolean) {
   const [host, setHost] = useState<string | null>(null)
